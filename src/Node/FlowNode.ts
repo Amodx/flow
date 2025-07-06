@@ -22,6 +22,21 @@ export class FlowNode {
     this.fromJSON(data);
   }
 
+  *getAllIO(
+    mode: "input" | "output" | "io" = "io"
+  ): Generator<FlowNodeInput | FlowNodeOutput> {
+    if (mode == "input" || mode == "io") {
+      for (const input of this.inputs) {
+        yield input;
+      }
+    }
+    if (mode == "output" || mode == "io") {
+      for (const output of this.outputs) {
+        yield output;
+      }
+    }
+  }
+
   fromJSON(data: NodeData): FlowNode {
     this.id = data.id;
     this.type = data.type;
@@ -95,7 +110,7 @@ export class FlowNode {
       inputs.push(this.inputs[i].toJSON());
     }
     const outputs: NodeOutputData[] = [];
-    for (let i = 0; i < this.inputs.length; i++) {
+    for (let i = 0; i < this.outputs.length; i++) {
       outputs.push(this.outputs[i].toJSON());
     }
     return {

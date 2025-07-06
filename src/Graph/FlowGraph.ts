@@ -1,4 +1,4 @@
-import { NodeData } from "../Node/FlowNode.types";
+import { NodeData, NodeEditorData } from "../Node/FlowNode.types";
 import { FlowNode } from "../Node/FlowNode";
 import { FlowGraphData, FlowGraphEditorData } from "./FlowGraph.types";
 
@@ -18,7 +18,7 @@ export class FlowGraph {
   type: string;
   outputNodeId: number;
   editorData: FlowGraphEditorData;
-  nodes: FlowNode[] = [];
+  nodes: (FlowNode | null)[] = [];
 
   private _free: number[] = [];
   private _nodeCount = 0;
@@ -36,6 +36,7 @@ export class FlowGraph {
         this._nodeCount++;
       }
     }
+
     const node = new FlowNode(this, nodeData);
     this.nodes[node.id] = node;
 
@@ -51,8 +52,8 @@ export class FlowGraph {
   removeNode(id: number): boolean {
     for (let i = 0; i < this.nodes.length; i++) {
       const node = this.nodes[i];
-      if (node.id !== id) continue;
-      this.nodes.splice(i);
+      if (!node || node.id !== id) continue;
+      this.nodes[i] = null;
       this._free.push(i);
       return true;
     }
@@ -67,11 +68,12 @@ export class FlowGraph {
       const node = this.addNode(nodeData);
       if (node.id > maxId) maxId = node.id;
     }
-    this._nodeCount = maxId;
+    this._nodeCount = maxId + 1;
     this._free = [];
     for (let i = 0; i < maxId; i++) {
       if (!this.nodes[i]) this._free.push(i);
     }
+
     for (const editorData of data.editorData.locations) {
       const node = this.getNode(editorData.id);
       if (!node) continue;
@@ -84,14 +86,28 @@ export class FlowGraph {
   }
 
   toJSON(): FlowGraphData {
+    const editorData: FlowGraphEditorData = {
+      x: this.editorData.x,
+      y: this.editorData.y,
+      zoom: this.editorData.zoom,
+      locations: [],
+    };
     const nodes: NodeData[] = [];
-    for (let i = 0; i < this.nodes.length; i++) {
-      nodes.push(this.nodes[i].toJSON());
+    for (let i = 0; i < this._nodeCount; i++) {
+      const node = this.nodes[i];
+      if (!node) continue;
+      editorData.locations.push({
+        id: node.id,
+        x: node.x,
+        y: node.y,
+        isCollapsed: node.isCollapsed,
+      });
+      nodes.push(node.toJSON());
     }
     return {
       type: this.type,
       outputNodeId: this.outputNodeId,
-      editorData: this.editorData,
+      editorData,
       nodes,
     };
   }

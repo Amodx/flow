@@ -2,9 +2,9 @@ import { FlowNode } from "./FlowNode";
 import { NodeOutputData } from "./FlowNode.types";
 
 export class FlowNodeOutput {
-  name: string;
-  valueType: string;
-  value: number;
+  name = "";
+  valueType = "";
+  value: any = 0;
   ioType: "output" = "output";
   outputName?: string;
   constructor(public node: FlowNode, data: NodeOutputData) {
